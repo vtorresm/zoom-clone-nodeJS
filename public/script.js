@@ -5,6 +5,12 @@ const myVideo = document.createElement('video');
 let myVideoStream;
 myVideo.muted = true;
 
+var peer = new Peer(undefined, {
+  path: '/peerjs',
+  host: '/',
+  port: '3030',
+});
+
 navigator.mediaDevices
   .getUserMedia({
     video: true,
@@ -13,17 +19,31 @@ navigator.mediaDevices
   .then((stream) => {
     myVideoStream = stream;
     addVideoStream(myVideo, stream);
+
+    peer.on('call', (call) => {
+      call.answer(stream);
+      const video = document.createElement('video');
+      call.on('stream', (userVideoStream) => {
+        addVideoStream(video, userVideoStream);
+      });
+    });
+
+    socket.on('user-connected', (userId) => {
+      connecToNewUser(userId, stream);
+    });
   });
 
-socket.emit('create or join', ROOM_ID);
-
-socket.on('user-connected', () => {
-  connecToNewUser();
+peer.on('open', (id) => {
+  socket.emit('join-room', ROOM_ID, id);
 });
 
-const connecToNewUser = () => {
-  console.log('new user connected');
-}
+const connecToNewUser = (userId) => {
+  const call = peer.call(userId, stream);
+  const video = document.createElement('video');
+  call.on('stream', (userVideoStream) => {
+    addVideoStream(video, userVideoStream);
+  });
+};
 
 const addVideoStream = (video, stream) => {
   video.srcObject = stream;
