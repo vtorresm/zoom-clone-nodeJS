@@ -43,6 +43,7 @@ video {
   display: flex;
   background-color: #1c1e20;
   color: #d2d2d2;
+  justify-content: space-between;
   padding: 5px;
 }
 
